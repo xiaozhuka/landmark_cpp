@@ -10,6 +10,22 @@
 
 using std::string;
 
+/**
+ * @brief Return dirpath and basename of a path.
+ */
+int splitFilename(const string& str, string& dir, string& base) {
+    std::size_t found = str.find_last_of("/\\");
+    if(found != string::npos) {
+        dir = str.substr(0, found);
+        base = str.substr(found+1);
+        return 0;
+    }
+    else {
+        return -1;
+    }
+    
+}
+
 int main() {
     // int InitializeFaceLib(double dConfidence, int nDevType=0, int nProcessIdx=0)
     // dConfidence: confidence
@@ -17,21 +33,23 @@ int main() {
     // nProcessIdx: assign GPU according to PID ??
     InitializeFaceLib(0.3, 2, 0);
     string sFilePath = "./img_list.txt";
+    string sLocFilePath = "./face_loc_list.txt"
     string strPath = "";
+    string dirName = "";
+    string baseName = "";
     std::fstream fImg(sFilePath.c_str(), std::ios::in);
+    std::fstream fFaceLoc(sLocFilePath.c_str(), std::ios::out);
     VEC_FACERECTINFO vecRlt;
 
     // location information
     int x, y, width, height;
-
     cv::Rect faceRect
-
     if(sImg.good()) {
         while(getline(sImg, strPath)) {
             // readin img
             srcMat = cv::imread(strPath);
             // get img path
-            sFileName = strPath.substr(strPath.find_last_of('\\') + 1, strPath.length() - strPath.find_last_of('\\') - 1);
+            splitFilename(strPath, dirName, baseName);
             // location
             qImg = IplImage(dstMat);
             LocationFace((unsigned char*)qImg.imageData, qImg.width, qImg.height, EImgType_Rgb24, 1, vecRlt);
@@ -44,11 +62,20 @@ int main() {
                 height = sInfo.nHeight;
 
                 // Use opencv to save image in the location rectangle.
+                faceRect = cv::Rect(x, y, width, height);
+                cv::Mat locatedFace;
+                srcMat(faceRect).copyTo(faceRect);
+                cv::imwrite(string(".\\dataset\\data\\") + 
+                                   baseName.substr(baseName.length()-4) + 
+                                   std::to_string(n) +
+                                   string(".jpg"), faceRect);
                 
-
-
+                fFaceLoc << std::to_string(x) + string(" ")\
+                         << std::to_string(y) + string(" ")\
+                         << std::to_string(width) + string(" ")\
+                         << std::to_string(height) + string(" ")\
+                         << std::endl;
             }
         }
     }
-
 }
