@@ -16,7 +16,13 @@ import os
 import sys
 import numpy as np
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/' + '..'))
-from face_detection.face_detection import txt2list
+
+def txt2list(txt_file):
+    """Return list returned by f.readlines()
+    """
+    with open(txt_file, 'r') as f:
+        l = list(f.readlines())
+    return [t.strip() for t in list(l)]
 
 width = height = int(sys.argv[1])
 train_ratio = 0.9
@@ -149,23 +155,23 @@ def random_augmentation(scale=None,
         return [np.array(tmp_img), np.array(tmp_lab)]
     return random_augmentation_func
 
-def run():
+def run(prefix=''):
     func = random_augmentation(scale=(0.3, 9),
                                 dirty_circle=0.2,
                                 random_flip_horizontal=None,
                                 random_filp_vertical=None,
                                 random_landmark_mask=0.2,
-                                random_squeeze=[0.4, 7],
-                                random_rotate=0.7)
+                                random_squeeze=[0.3, 7],
+                                random_rotate=0.3)
     ds = [[i, l] for i, l in zip(txt2list(r'..\face_detection\img_list.txt'), txt2list(r'..\face_detection\landmark_list.txt'))]
     
     def _aug(ds):
         result = []
         for single_ds in ds:
             if 'ce' in single_ds[0]:
-                result += 8*[single_ds]
+                result += 6*[single_ds]
             elif 'low' in single_ds[0]:
-                result += 3*[single_ds]
+                result += 2*[single_ds]
             elif '21_points_1' in single_ds[0]:
                 result += 2*[single_ds]
             elif '21_points_3' in single_ds[0]:
@@ -174,7 +180,7 @@ def run():
                 result += [single_ds]
 
         return result
-    ds = _aug(ds)
+    # ds = _aug(ds)
     # ds = ds * 4
     img_lists = []
     labels_lists = []
@@ -183,6 +189,8 @@ def run():
     filenames = [ds[i][0] for i in range(len(ds))]
     labels = [[float(t) for t in ds[i][1].split()] for i in range(len(ds))]
     for filename, label in zip(filenames, labels):
+        if len(label) < 2:
+            continue
         if not os.path.isfile(filename):
             print('filename: %s don\' exists' % filename)
             continue
@@ -190,7 +198,7 @@ def run():
         if img is None:
             print('Failed to read file: %s'%filename)
             continue
-        # print('Read in image: %s'%filename)
+        print('Read in image: %s'%filename)
         img = resize(img, (width, height))
         label = np.array(label, dtype=np.float32)
         img = img.astype(np.float32)
@@ -204,7 +212,7 @@ def run():
         # img_lists.append((img[:, :, ::-1] - np.mean(img)) / np.std(img))
         labels_lists.append(label)
 
-        for _ in range(3):
+        for _ in range(2):
             label = np.array(label, dtype=np.float32)
             img_ = img.copy()
             label_ = label.copy()
@@ -226,25 +234,22 @@ def run():
     test_imgs = img_lists[bound:]
     test_labels = labels_lists[bound:]
 
-    with h5py.File('./train_dataset.h5', 'w') as f:
+    with h5py.File('./train_dataset%s.h5'%prefix, 'w') as f:
         f.create_dataset('data', data=train_imgs, dtype=np.float32)
         f.create_dataset('landmarks', data=train_labels, dtype=np.float32)
 
-    with open('./train_dataset.txt', 'w') as f:
-        f.write(os.path.abspath('./train_dataset.h5') + '\n')
+    with open('./train_dataset%s.txt'%prefix, 'w') as f:
+        f.write(os.path.abspath('./train_dataset%s.h5'%prefix) + '\n')
 
-    with h5py.File('./test_dataset.h5', 'w') as f:
+    with h5py.File('./test_dataset%s.h5'%prefix, 'w') as f:
         f.create_dataset('data', data=test_imgs, dtype=np.float32)
         f.create_dataset('landmarks', data=test_labels, dtype=np.float32)
 
-    with open('./test_dataset.txt', 'w') as f:
-        f.write(os.path.abspath('./test_dataset.h5') + '\n')
+    with open('./test_dataset%s.txt'%prefix, 'w') as f:
+        f.write(os.path.abspath('./test_dataset%s.h5'%prefix) + '\n')
 
 if __name__ == '__main__':
-    run()
-
-
-
-
-
-
+    if len(sys.argv) == 2:
+        run()
+    else:
+        run(sys.argv[2])

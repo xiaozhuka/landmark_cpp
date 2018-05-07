@@ -6,7 +6,7 @@ layer {
    top: "landmarks"
    hdf5_data_param {
      source: "./train_dataset.txt" # do not give the h5 files directly, but the list.
-     batch_size: 256
+     batch_size: 512
    }
    include { phase:TRAIN }
  }
@@ -17,7 +17,7 @@ layer {
    top: "landmarks"
    hdf5_data_param {
      source: "./test_dataset.txt" # do not give the h5 files directly, but the list.
-     batch_size: 32
+     batch_size: 512
    }
    include { phase:TEST }
 }
