@@ -1,0 +1,21 @@
+net: "train.prototxt"
+type: "Adam"
+test_iter: 1000
+test_interval: 10000
+test_initialization: false
+base_lr: 0.001
+lr_policy: "multistep"
+gamma: 0.1
+stepvalue: 42000
+stepvalue: 61000
+
+display: 500
+max_iter: 200001
+momentum: 0.9
+momentum2: 0.999
+delta: 1e-8
+weight_decay: 0.001
+
+snapshot: 10000
+snapshot_prefix: "./model/"
+solver_mode: GPU
