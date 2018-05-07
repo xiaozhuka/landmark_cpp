@@ -31,7 +31,7 @@ int splitFilename(const string& str, string& dir, string& base) {
 
 }
 
-int face_detection() {
+int face_loc() {
 	
 	// google::InitGoogleLogging("FaceLocationGlog");
 	// LOG(INFO) << "Initialize Face location lib.";
@@ -43,17 +43,20 @@ int face_detection() {
 	InitializeFaceLib(0.3, 2, 0);
 	// txt file, save img path and location coordination
 	string sFilePath = ".\\dataset\\img_list.txt";  
-	string sLocFilePath = ".\\dateset\\face_loc_list.txt";
+	string sLocFilePath = ".\\face_detection\\vs_loc_list.txt";
+	string sLocImgFilePath = ".\\face_detection\\vs_img_list.txt";
 	
 	string strPath = "";
 	string dirName = "";
 	string baseName = "";
+	string newImgPath = "";
 
 	std::fstream fImg(sFilePath.c_str(), std::ios::in);
 	std::fstream fFaceLoc(sLocFilePath.c_str(), std::ios::out);
+	std::fstream fFaceLocImg(sLocImgFilePath.c_str(), std::ios::out);
 	VEC_FACERECTINFO vecRlt;
 
-	cv::Mat srcMat, dstMat;
+	cv::Mat srcMat;
 	IplImage qImg;
 
 	// location information
@@ -63,13 +66,15 @@ int face_detection() {
 		while (std::getline(fImg, strPath)) {
 			// readin img
 			srcMat = cv::imread(strPath);
-			printf("%s", strPath.c_str());
+			
+			if (!srcMat.data)
+				continue;
 			// get img path
 			splitFilename(strPath, dirName, baseName);
 			// location
-			qImg = IplImage(dstMat);
+			qImg = IplImage(srcMat);
 			LocationFace((unsigned char*)qImg.imageData, qImg.width, qImg.height, EImgType_Rgb24, 1, vecRlt);
-
+			printf("%d faces found in image %s\n", vecRlt.size(), strPath.c_str());
 			for (int n = 0; n<vecRlt.size(); n++) {
 				SFaceRectInfo sInfo = vecRlt[n];
 				x = sInfo.nX;
@@ -77,21 +82,37 @@ int face_detection() {
 				width = sInfo.nWidth;
 				height = sInfo.nHeight;
 
+				//make it boarder
+				double tmp_x = (double)x;
+				double tmp_y = (double)y;
+				double tmp_width = (double)width;
+				double tmp_height = (double)height;
+				tmp_x = tmp_x - tmp_height / 6;
+				tmp_y = tmp_y - tmp_width / 6;
+				tmp_height = tmp_height * (1 + 1.0 / 3);
+				tmp_width = tmp_width * (1 + 1.0 / 3);
+
+				x = (int)tmp_x;
+				y = (int)tmp_y;
+				tmp_height = (int)tmp_height;
+				tmp_width = (int)tmp_width;
+
 				// Use opencv to save image in the location rectangle.
 				faceRect = cv::Rect(x, y, width, height);
 				cv::Mat locatedFace;
 				srcMat(faceRect).copyTo(locatedFace);
-				cv::imwrite(string(".\\dataset\\detected_face\\") +
-					baseName.substr(baseName.length() - 4) +
-					std::to_string(n) +
-					string(".jpg"), locatedFace);
+				newImgPath = dirName + string("//") + string("vs_detected_") + baseName;
+				cv::imwrite(newImgPath,
+							locatedFace);
 
 				fFaceLoc << std::to_string(x) + string(" ")\
 					<< std::to_string(y) + string(" ")\
 					<< std::to_string(width) + string(" ")\
 					<< std::to_string(height) + string(" ")\
 					<< std::endl;
+				fFaceLocImg << newImgPath << std::endl;
 			}
 		}
 	}
+	ReleaseFaceLib();
 }

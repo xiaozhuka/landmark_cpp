@@ -38,12 +38,6 @@ private:
 	std::vector<T> Detect(const cv::Mat& img);
 
 	/**
-	 * @brief Detect landmark.
-	 * Use void* as input, do forward.
-	 */
-	std::vector<T> Detect(const void *data);
-
-	/**
 	 * Wrap the input layer of the network in separate cv::Mat objects
 	 * (one per channel).
 	 */

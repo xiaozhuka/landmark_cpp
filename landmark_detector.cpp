@@ -62,6 +62,7 @@ std::vector<T> LandmarkDetector<T>::Detect(const cv::Mat& img) {
 	input_layer->Reshape(1, num_channels_,
 		input_geometry_.height, input_geometry_.width);
 	net_.Reshape();
+	// link img to input, input_channels_
 	WrapInputLayer();
 	Preprocess(img);
 	net_.Forward();
@@ -72,22 +73,6 @@ std::vector<T> LandmarkDetector<T>::Detect(const cv::Mat& img) {
 }
 
 template<typename T>
-std::vector<T> LandmarkDetector<T>::Detect(const void *data) {
-	Blob<T>* input_layer = net_->input_blobs()[0];
-	input_layer->data()->set_gpu_data((void *)data);
-	/**
-	* What's the difference?
-	* ForwardPrefilled() is depecated.
-	*/
-	// net_->ForwardPrefilled();
-	net_->Forward();
-	// Copy the output layer to a std::vector
-	Blob<T>* output_layer = net_->output_blobs()[0];
-	const T* begin = output_layer->cpu_data();
-	return std::vector<T>begin;
-}
-
-template<typename T>
 std::vector<T> LandmarkDetector<T>::getLandmark(const cv::Mat& img) {
-	Detect(const void *data)
+	return Detect(img);
 }
