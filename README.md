@@ -1,8 +1,7 @@
 # face landmark caffe implementation
 
 
-**note** If you are using windows, all the scripts can run under cmd with
-some modification.
+**note** If you are using windows, just run run.bat.
 
 ## prepare dataset for train and valid
 ### define some parameters
@@ -65,15 +64,18 @@ D:\caffe-windows\scripts\build\tools\Release\caffe.exe train --solver=./solver.p
 ### 4. Finetune
 First generate h5 file.
 ```shell
+cd ..
+cd finetune
 python finetune_prepare_dataset.py ${WIDTH}
 ```
 
-Then finetune.
+Then finetune, change the model to what you want to use.
 ```shell
-D:\caffe-windows\scripts\build\tools\Release\caffe.exe train --solver=./solver.prototxt  --gpu=0 --weights ..\train\model\_iter_30000.caffemodel
+D:\caffe-windows\scripts\build\tools\Release\caffe.exe train --solver=./solver.prototxt  --gpu=0 --weights ..\train\model\_iter_100000.caffemodel
 ```
 
 ## Run validation
+
 
 
 ## *RPN* propose key points
