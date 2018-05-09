@@ -17,6 +17,24 @@ import sys
 import numpy as np
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/' + '..'))
 
+def cf2cl(img):
+    """Channel first to channel last.
+    """
+    i = np.ones([img.shape[1], img.shape[2], img.shape[0]])
+    assert img.ndim == 3
+    for j in range(img.shape[0]):
+        i[:, :, j] = img[j, :, :]
+    return i
+
+def cl2cf(img):
+    """Channel last to channel first.
+    """
+    i = np.ones([img.shape[1], img.shape[2], img.shape[0]])
+    assert img.ndim == 3
+    for j in range(img.shape[-1]):
+        i[j, :, :] = img[:, :, j]
+    return i
+
 def txt2list(txt_file):
     """Return list returned by f.readlines()
     """
@@ -207,8 +225,9 @@ def run(prefix=''):
         s = img.shape
         label[::2] = label[::2] / s[1]
         label[1::2] = label[1::2] / s[0]
-        img = img[:, :, (2, 1, 0)]
-        img_lists.append((img - np.mean(img, axis=(0, 1))) / np.std(img, axis=(0, 1)))
+        img = (img - np.mean(img, axis=(0, 1))) / np.std(img, axis=(0, 1))
+        img = cl2cf(img)
+        img_lists.append(img)
         # img_lists.append((img[:, :, ::-1] - np.mean(img)) / np.std(img))
         labels_lists.append(label)
 
@@ -228,11 +247,11 @@ def run(prefix=''):
             labels_lists.append(label__)
 
     bound = int(len(img_lists) * train_ratio)
-    train_imgs = img_lists[:bound]
-    train_labels = labels_lists[:bound]
+    train_imgs = np.array(img_lists[:bound])
+    train_labels = np.array(labels_lists[:bound])
 
-    test_imgs = img_lists[bound:]
-    test_labels = labels_lists[bound:]
+    test_imgs = np.array(img_lists[bound:])
+    test_labels = np.array(labels_lists[bound:])
 
     with h5py.File('./train_dataset%s.h5'%prefix, 'w') as f:
         f.create_dataset('data', data=train_imgs, dtype=np.float32)
